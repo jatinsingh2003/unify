@@ -1,0 +1,11 @@
+# ============================================================
+# Week 4 — New env vars to add to your .env.local
+# ============================================================
+
+# Shopify (new in Week 4)
+SHOPIFY_CLIENT_ID=REPLACE_ME
+SHOPIFY_CLIENT_SECRET=REPLACE_ME
+
+# Also add the Shopify callback to your middleware.ts public routes:
+# "/api/integrations/shopify/callback(.*)"
+# (already covered by the existing "/api/integrations/(.*)/callback(.*)" pattern)
