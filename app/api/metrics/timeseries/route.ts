@@ -8,21 +8,30 @@ export async function GET(req: NextRequest) {
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { searchParams } = new URL(req.url);
-  const days = parseInt(searchParams.get("days") ?? "30", 10);
   const platform = searchParams.get("platform") ?? "all";
 
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - days);
-  const fmt = (d: Date) => d.toISOString().split("T")[0];
+  let startStr: string;
+  let endStr: string;
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  if (searchParams.has("from") && searchParams.has("to")) {
+    startStr = searchParams.get("from")!;
+    endStr = searchParams.get("to")!;
+  } else {
+    const days = parseInt(searchParams.get("days") ?? "30", 10);
+    const start = new Date();
+    start.setDate(start.getDate() - days);
+    startStr = start.toISOString().split("T")[0];
+    endStr = todayStr;
+  }
 
   const supabase = createServiceClient();
   let q = supabase
     .from("daily_metrics")
     .select("date, spend, revenue, impressions, clicks, conversions")
     .eq("client_id", orgId)
-    .gte("date", fmt(start))
-    .lte("date", fmt(end))
+    .gte("date", startStr)
+    .lte("date", endStr)
     .order("date", { ascending: true });
   if (platform !== "all") q = q.eq("platform", platform);
 

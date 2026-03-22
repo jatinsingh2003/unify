@@ -37,16 +37,32 @@ export async function exchangeShopifyCode(shop: string, code: string): Promise<s
   return data.access_token;
 }
 
-export async function fetchShopifyOrders(tokens: ShopifyTokens, dateRange: { start: string; end: string }): Promise<any[]> {
-  const url = `https://${tokens.shop}/admin/api/2024-01/orders.json?status=any` +
+export async function fetchShopifyOrders(tokens: ShopifyTokens, dateRange: { start: string; end: string }): Promise<unknown[]> {
+  let url: string | null = `https://${tokens.shop}/admin/api/2024-01/orders.json?status=any` +
     `&created_at_min=${dateRange.start}T00:00:00Z&created_at_max=${dateRange.end}T23:59:59Z` +
-    `&limit=250&fields=id,total_price,created_at,financial_status`;
-  const res = await fetch(url, {
-    headers: { "X-Shopify-Access-Token": tokens.access_token, "Content-Type": "application/json" },
-  });
-  if (!res.ok) throw new Error(`Shopify orders fetch failed: ${await res.text()}`);
-  const data = await res.json();
-  return data.orders ?? [];
+    `&limit=250&fields=id,order_number,total_price,subtotal_price,total_discounts,created_at,financial_status,landing_site,referring_site`;
+  
+  const allOrders: unknown[] = [];
+
+  while (url) {
+    const res: Response = await fetch(url, {
+      headers: { "X-Shopify-Access-Token": tokens.access_token, "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error(`Shopify orders fetch failed: ${await res.text()}`);
+    
+    const data = await res.json();
+    allOrders.push(...((data.orders as unknown[]) ?? []));
+
+    // Handle Link-header pagination
+    const linkHeader: string | null = res.headers.get("Link");
+    url = null; // Default to stop
+    if (linkHeader) {
+      const nextMatch: RegExpMatchArray | null = linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+      if (nextMatch) url = nextMatch[1];
+    }
+  }
+
+  return allOrders;
 }
 
 export function buildShopifyAuthUrl(shop: string, state: string): string {

@@ -13,6 +13,6 @@ export async function GET(req: NextRequest) {
   if (!/^[a-zA-Z0-9-]+\.myshopify\.com$/.test(shop))
     return NextResponse.json({ error: "Invalid shop domain. Must be *.myshopify.com" }, { status: 400 });
   const state = crypto.randomBytes(16).toString("hex");
-  await kv.set(`shopify:oauth:state:${state}`, orgId, { ex: 600 });
+  await kv.set(`shopify:oauth:state:${state}`, orgId, 600);
   return NextResponse.redirect(buildShopifyAuthUrl(shop, state));
 }

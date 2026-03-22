@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
+import { createServiceClient } from "@/lib/supabase/server";
 import { auth } from "@clerk/nextjs/server";
 import { formatCurrency, formatNumber, formatMultiplier, formatPercent } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -10,9 +11,9 @@ interface Props {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  active:  "bg-emerald-50 text-emerald-700 border-emerald-100",
-  paused:  "bg-amber-50 text-amber-700 border-amber-100",
-  removed: "bg-slate-100 text-slate-500 border-slate-200",
+  active:  "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  paused:  "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  removed: "bg-slate-800 text-slate-500 border-white/5",
 };
 
 const PLATFORM_LABELS: Record<string, string> = {
@@ -22,16 +23,16 @@ const PLATFORM_LABELS: Record<string, string> = {
 };
 
 const PLATFORM_COLORS: Record<string, string> = {
-  google_ads: "text-blue-600 bg-blue-50",
-  meta_ads:   "text-blue-700 bg-blue-100",
-  shopify:    "text-green-700 bg-green-50",
+  google_ads: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+  meta_ads:   "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
+  shopify:    "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
 };
 
 export async function CampaignsTable({ from, to, platform }: Props) {
-  const { orgId } = auth();
+  const { orgId } = await auth();
   if (!orgId) return null;
 
-  const supabase = await createClient();
+  const supabase = createServiceClient(); // Fixed: Use the standard helper
 
   // Join campaigns with aggregated metrics for the date range
   let metricsQuery = supabase
@@ -90,73 +91,69 @@ export async function CampaignsTable({ from, to, platform }: Props) {
 
   if (!campaigns.length) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card p-12 text-center">
-        <p className="text-sm text-muted-foreground">
-          No campaigns found. Connect a platform to start syncing.
-        </p>
-        <a href="/integrations" className="text-xs text-primary hover:underline mt-2 inline-block">
-          Go to Integrations →
-        </a>
+      <div className="p-20 text-center bg-card">
+        <div className="flex flex-col items-center justify-center space-y-4 max-w-sm mx-auto">
+          <div className="w-16 h-16 rounded-full bg-white/5 border border-white/5 flex items-center justify-center text-slate-500 italic font-black text-2xl tracking-tighter">U</div>
+          <p className="text-sm text-slate-500 font-medium italic">
+            Deployment nodes not found. Syncing infrastructure required.
+          </p>
+          <Link href="/integrations" className="text-xs font-bold uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors">
+            Connect Channels →
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden">
+    <div className="bg-card">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted/30">
-              {["Campaign", "Platform", "Status", "Spend", "Revenue", "ROAS", "Conv.", "CPA", "Clicks", "CTR"].map((h) => (
+            <tr className="border-b border-white/5 bg-white/[0.02]">
+              {["Campaign", "Status", "Allocation", "Yield", "Efficiency", "Conv.", "CPA", "CTR"].map((h) => (
                 <th
                   key={h}
-                  className="px-4 py-3 text-left text-xs font-medium text-muted-foreground whitespace-nowrap"
+                  className="px-6 py-4 text-left text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap"
                 >
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-white/5">
             {campaigns.map((c) => (
-              <tr key={c.id} className="hover:bg-muted/20 transition-colors">
-                <td className="px-4 py-3">
-                  <p className="font-medium truncate max-w-[200px]" title={c.name}>
-                    {c.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground capitalize mt-0.5">
-                    {c.campaign_type ?? "—"}
-                  </p>
+              <tr key={c.id} className="hover:bg-white/[0.03] transition-all duration-300 cursor-pointer group">
+                <td className="px-6 py-5">
+                  <Link href={`/campaigns/${c.id}`} className="block">
+                    <p className="font-bold text-white truncate max-w-[200px] group-hover:text-indigo-400 transition-colors" title={c.name}>
+                      {c.name}
+                    </p>
+                    <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1 italic leading-none">
+                      {PLATFORM_LABELS[c.platform] ?? c.platform} • {c.campaign_type ?? "DEPLOY"}
+                    </p>
+                  </Link>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-6 py-5">
                   <span className={cn(
-                    "text-xs font-medium px-2 py-0.5 rounded-full",
-                    PLATFORM_COLORS[c.platform] ?? "bg-muted text-muted-foreground"
-                  )}>
-                    {PLATFORM_LABELS[c.platform] ?? c.platform}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className={cn(
-                    "text-xs font-medium px-2 py-0.5 rounded-full border capitalize",
+                    "text-[10px] font-bold px-2.5 py-1 rounded-md border uppercase tracking-widest",
                     STATUS_STYLES[c.status ?? "active"] ?? STATUS_STYLES.active
                   )}>
                     {c.status ?? "active"}
                   </span>
                 </td>
-                <td className="px-4 py-3 tabular-nums">{formatCurrency(c.spend, "USD", true)}</td>
-                <td className="px-4 py-3 tabular-nums">{formatCurrency(c.revenue, "USD", true)}</td>
-                <td className="px-4 py-3 tabular-nums">
+                <td className="px-6 py-5 tabular-nums text-white font-medium">{formatCurrency(c.spend, "USD", true)}</td>
+                <td className="px-6 py-5 tabular-nums text-white font-medium">{formatCurrency(c.revenue, "USD", true)}</td>
+                <td className="px-6 py-5 tabular-nums">
                   {c.roas > 0 ? (
-                    <span className={c.roas >= 2 ? "text-emerald-600 font-medium" : "text-amber-600"}>
-                      {formatMultiplier(c.roas, 2)}
+                    <span className={cn("text-[11px] font-black italic", c.roas >= 2.5 ? "text-emerald-400" : "text-amber-400")}>
+                      {formatMultiplier(c.roas, 2)} ROAS
                     </span>
-                  ) : "—"}
+                  ) : <span className="text-slate-700 italic font-medium">pending</span>}
                 </td>
-                <td className="px-4 py-3 tabular-nums">{formatNumber(c.conversions)}</td>
-                <td className="px-4 py-3 tabular-nums">{c.cpa > 0 ? formatCurrency(c.cpa) : "—"}</td>
-                <td className="px-4 py-3 tabular-nums">{formatNumber(c.clicks)}</td>
-                <td className="px-4 py-3 tabular-nums text-muted-foreground">
+                <td className="px-6 py-5 tabular-nums text-slate-400">{formatNumber(c.conversions)}</td>
+                <td className="px-6 py-5 tabular-nums text-slate-400">{c.cpa > 0 ? formatCurrency(c.cpa) : "—"}</td>
+                <td className="px-6 py-5 tabular-nums text-slate-500 font-bold italic tracking-tighter">
                   {c.ctr > 0 ? formatPercent(c.ctr) : "—"}
                 </td>
               </tr>

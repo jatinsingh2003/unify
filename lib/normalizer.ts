@@ -31,7 +31,7 @@ export interface NormalizedDailyMetric {
   cpa: number;
   roas: number;
   aov: number;
-  raw_data: Record<string, any>;
+  raw_data: Record<string, unknown>;
 }
 
 export function normalizeGoogleCampaign(raw: any, clientId: string): NormalizedCampaign {
@@ -102,16 +102,51 @@ export function normalizeMetaMetrics(
   };
 }
 
+export interface NormalizedOrderAttribution {
+  client_id: string;
+  order_id: string;
+  platform: "shopify";
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_content: string | null;
+  utm_term: string | null;
+  total_price: number;
+  created_at: string;
+}
+
+export function extractOrderAttribution(order: any, clientId: string): NormalizedOrderAttribution {
+  const landingSite = order.landing_site || "";
+  const params = new URLSearchParams(landingSite.includes("?") ? landingSite.split("?")[1] : "");
+  
+  return {
+    client_id: clientId,
+    order_id: String(order.id),
+    platform: "shopify",
+    utm_source: params.get("utm_source"),
+    utm_medium: params.get("utm_medium"),
+    utm_campaign: params.get("utm_campaign"),
+    utm_content: params.get("utm_content"),
+    utm_term: params.get("utm_term"),
+    total_price: parseFloat(order.total_price ?? "0"),
+    created_at: order.created_at,
+  };
+}
+
 export function normalizeShopifyOrders(
-  orders: any[], clientId: string, campaignUuid: string, date: string
+  orders: unknown[], clientId: string, campaignUuid: string, date: string
 ): NormalizedDailyMetric {
-  const revenue = orders.reduce((sum, o) => sum + parseFloat(o.total_price ?? "0"), 0);
+  // Net Sales = Subtotal - Discounts
+  const subtotal = (orders as any[]).reduce((sum, o) => sum + parseFloat(o.subtotal_price ?? "0"), 0);
+  const discounts = (orders as any[]).reduce((sum, o) => sum + parseFloat(o.total_discounts ?? "0"), 0);
+  const revenue = subtotal - discounts;
+  
   const cnt = orders.length;
   return {
     client_id: clientId, campaign_id: campaignUuid, platform: "shopify", date,
     spend: 0, revenue, impressions: 0, clicks: 0, conversions: cnt, orders: cnt,
     ctr: 0, cpc: 0, cpa: 0, roas: 0,
     aov: cnt > 0 ? revenue / cnt : 0,
-    raw_data: { orders_count: cnt, revenue },
+    raw_data: { orders_count: cnt, subtotal, discounts, revenue },
   };
 }

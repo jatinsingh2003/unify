@@ -4,11 +4,16 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
-export function formatCurrency(value: number): string {
+export function formatCurrency(
+  value: number,
+  currency = "USD",
+  compact = false
+): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
+    currency,
+    notation: compact ? "compact" : "standard",
+    maximumFractionDigits: compact ? 1 : 0,
   }).format(value);
 }
 
@@ -20,6 +25,6 @@ export function formatPercent(value: number): string {
   return `${value.toFixed(2)}%`;
 }
 
-export function formatMultiplier(value: number): string {
-  return `${value.toFixed(2)}x`;
+export function formatMultiplier(value: number, decimals = 2): string {
+  return `${value.toFixed(decimals)}x`;
 }

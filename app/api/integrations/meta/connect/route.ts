@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const { orgId } = await auth();
   if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const state = crypto.randomBytes(16).toString("hex");
-  await kv.set(`meta:oauth:state:${state}`, orgId, { ex: 600 });
+  await kv.set(`meta:oauth:state:${state}`, orgId, 600);
   const params = new URLSearchParams({
     client_id: process.env.META_APP_ID!,
     redirect_uri: `${process.env.APP_URL}/api/integrations/meta/callback`,

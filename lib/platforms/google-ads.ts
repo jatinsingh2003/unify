@@ -1,10 +1,7 @@
 // lib/platforms/google-ads.ts
-// Uses your integrations table schema:
-//   access_token, refresh_token, expires_at (timestamptz), account_id
-
 import { createServiceClient } from "@/lib/supabase/server";
 
-const GOOGLE_ADS_BASE = "https://googleads.googleapis.com/v17";
+const GOOGLE_ADS_BASE = "https://googleads.googleapis.com/v19";
 
 async function refreshGoogleToken(refreshToken: string): Promise<{ access_token: string; expires_at: string }> {
   const res = await fetch("https://oauth2.googleapis.com/token", {
@@ -47,37 +44,97 @@ export async function getGoogleAccessToken(clientId: string): Promise<string> {
 }
 
 export async function getGoogleCustomerIds(accessToken: string): Promise<string[]> {
-  const res = await fetch(
-    "https://googleads.googleapis.com/v17/customers:listAccessibleCustomers",
-    { headers: { Authorization: `Bearer ${accessToken}`, "developer-token": process.env.GOOGLE_DEVELOPER_TOKEN! } }
-  );
-  if (!res.ok) throw new Error(`Failed to list Google customers: ${await res.text()}`);
-  const data = await res.json();
-  return (data.resourceNames ?? []).map((r: string) => r.replace("customers/", ""));
+  const url = `${GOOGLE_ADS_BASE}/customers:listAccessibleCustomers`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "developer-token": process.env.GOOGLE_DEVELOPER_TOKEN!,
+    },
+  });
+
+  const rawBody = await res.text();
+
+  if (!res.ok) {
+    console.error(`[google-ads] Failed to list customers. Status: ${res.status} ${res.statusText}`);
+    console.error(`[google-ads] Raw Response: ${rawBody}`);
+    throw new Error(`Failed to list Google customers: HTTP ${res.status}`);
+  }
+
+  try {
+    const data = JSON.parse(rawBody);
+    return (data.resourceNames ?? []).map((r: string) => r.replace("customers/", ""));
+  } catch (err) {
+    console.error("[google-ads] Failed to parse JSON response:", err);
+    console.error("[google-ads] Raw Response:", rawBody);
+    throw new Error("Google Ads API returned an invalid response (not JSON).");
+  }
 }
 
 export async function fetchGoogleCampaigns(accessToken: string, customerId: string): Promise<any[]> {
-  const query = `SELECT campaign.id, campaign.name, campaign.status, campaign.advertising_channel_type FROM campaign WHERE campaign.status != 'REMOVED'`;
-  const res = await fetch(`${GOOGLE_ADS_BASE}/customers/${customerId}/googleAds:search`, {
+  const query = "SELECT campaign.id, campaign.name, campaign.status, campaign.advertising_channel_type FROM campaign WHERE campaign.status != 'REMOVED'";
+  const url = `${GOOGLE_ADS_BASE}/customers/${customerId}/googleAds:search`;
+
+  const res = await fetch(url, {
     method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "developer-token": process.env.GOOGLE_DEVELOPER_TOKEN!, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "developer-token": process.env.GOOGLE_DEVELOPER_TOKEN!,
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({ query }),
   });
-  if (!res.ok) throw new Error(`Google campaign fetch failed: ${await res.text()}`);
-  const data = await res.json();
-  return data.results ?? [];
+
+  const rawBody = await res.text();
+
+  if (!res.ok) {
+    console.error(`[google-ads] Campaign fetch failed. Status: ${res.status} ${res.statusText}`);
+    console.error(`[google-ads] Raw Response: ${rawBody}`);
+    throw new Error(`Google campaign fetch failed: HTTP ${res.status}`);
+  }
+
+  try {
+    const data = JSON.parse(rawBody);
+    return data.results ?? [];
+  } catch (err) {
+    console.error("[google-ads] Failed to parse campaign JSON:", err);
+    console.error("[google-ads] Raw Response:", rawBody);
+    throw new Error("Google Ads API returned invalid campaign data (not JSON).");
+  }
 }
 
 export async function fetchGoogleDailyMetrics(
-  accessToken: string, customerId: string, dateRange: { start: string; end: string }
+  accessToken: string,
+  customerId: string,
+  dateRange: { start: string; end: string }
 ): Promise<any[]> {
   const query = `SELECT campaign.id, segments.date, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions, metrics.conversions_value FROM campaign WHERE segments.date BETWEEN '${dateRange.start}' AND '${dateRange.end}' AND campaign.status != 'REMOVED'`;
-  const res = await fetch(`${GOOGLE_ADS_BASE}/customers/${customerId}/googleAds:search`, {
+  const url = `${GOOGLE_ADS_BASE}/customers/${customerId}/googleAds:search`;
+
+  const res = await fetch(url, {
     method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "developer-token": process.env.GOOGLE_DEVELOPER_TOKEN!, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "developer-token": process.env.GOOGLE_DEVELOPER_TOKEN!,
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify({ query }),
   });
-  if (!res.ok) throw new Error(`Google metrics fetch failed: ${await res.text()}`);
-  const data = await res.json();
-  return data.results ?? [];
+
+  const rawBody = await res.text();
+
+  if (!res.ok) {
+    console.error(`[google-ads] Metrics fetch failed. Status: ${res.status} ${res.statusText}`);
+    console.error(`[google-ads] Raw Response: ${rawBody}`);
+    throw new Error(`Google metrics fetch failed: HTTP ${res.status}`);
+  }
+
+  try {
+    const data = JSON.parse(rawBody);
+    return data.results ?? [];
+  } catch (err) {
+    console.error("[google-ads] Failed to parse metrics JSON:", err);
+    console.error("[google-ads] Raw Response:", rawBody);
+    throw new Error("Google Ads API returned invalid metrics data (not JSON).");
+  }
 }

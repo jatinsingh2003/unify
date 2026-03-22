@@ -37,16 +37,42 @@ export async function getMetaAccessToken(clientId: string): Promise<string> {
 
 export async function getMetaAdAccounts(accessToken: string): Promise<string[]> {
   const res = await fetch(`${META_GRAPH}/me/adaccounts?fields=id,name&access_token=${accessToken}`);
-  if (!res.ok) throw new Error(`Failed to list Meta ad accounts: ${await res.text()}`);
-  const data = await res.json();
-  return (data.data ?? []).map((a: any) => a.id as string);
+  const rawBody = await res.text();
+
+  if (!res.ok) {
+    console.error(`[meta-ads] Failed to list accounts. Status: ${res.status} ${res.statusText}`);
+    console.error(`[meta-ads] Raw Response: ${rawBody}`);
+    throw new Error(`Failed to list Meta ad accounts: HTTP ${res.status}`);
+  }
+
+  try {
+    const data = JSON.parse(rawBody);
+    return (data.data ?? []).map((a: any) => a.id as string);
+  } catch (err) {
+    console.error("[meta-ads] Failed to parse account JSON:", err);
+    console.error("[meta-ads] Raw Response:", rawBody);
+    throw new Error("Meta API returned invalid JSON for ad accounts.");
+  }
 }
 
 export async function fetchMetaCampaigns(accessToken: string, adAccountId: string): Promise<any[]> {
   const res = await fetch(`${META_GRAPH}/${adAccountId}/campaigns?fields=id,name,status,objective&access_token=${accessToken}`);
-  if (!res.ok) throw new Error(`Meta campaign fetch failed: ${await res.text()}`);
-  const data = await res.json();
-  return data.data ?? [];
+  const rawBody = await res.text();
+
+  if (!res.ok) {
+    console.error(`[meta-ads] Campaign fetch failed. Status: ${res.status} ${res.statusText}`);
+    console.error(`[meta-ads] Raw Response: ${rawBody}`);
+    throw new Error(`Meta campaign fetch failed: HTTP ${res.status}`);
+  }
+
+  try {
+    const data = JSON.parse(rawBody);
+    return data.data ?? [];
+  } catch (err) {
+    console.error("[meta-ads] Failed to parse campaign JSON:", err);
+    console.error("[meta-ads] Raw Response:", rawBody);
+    throw new Error("Meta API returned invalid campaign JSON.");
+  }
 }
 
 export async function fetchMetaDailyInsights(
@@ -57,7 +83,20 @@ export async function fetchMetaDailyInsights(
     `&time_increment=1&time_range=${encodeURIComponent(JSON.stringify({ since: dateRange.start, until: dateRange.end }))}` +
     `&level=campaign&access_token=${accessToken}`
   );
-  if (!res.ok) throw new Error(`Meta insights fetch failed: ${await res.text()}`);
-  const data = await res.json();
-  return data.data ?? [];
+  const rawBody = await res.text();
+
+  if (!res.ok) {
+    console.error(`[meta-ads] Insights fetch failed. Status: ${res.status} ${res.statusText}`);
+    console.error(`[meta-ads] Raw Response: ${rawBody}`);
+    throw new Error(`Meta insights fetch failed: HTTP ${res.status}`);
+  }
+
+  try {
+    const data = JSON.parse(rawBody);
+    return data.data ?? [];
+  } catch (err) {
+    console.error("[meta-ads] Failed to parse insights JSON:", err);
+    console.error("[meta-ads] Raw Response:", rawBody);
+    throw new Error("Meta API returned invalid insights JSON.");
+  }
 }

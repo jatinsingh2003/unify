@@ -1,9 +1,6 @@
 // app/api/integrations/google/callback/route.ts
-// Saves tokens to integrations table using YOUR column names:
-//   access_token, refresh_token, expires_at (timestamptz)
-
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@/lib/kv";
+import { verifyOAuthState } from "@/lib/oauth-state";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
@@ -15,10 +12,13 @@ export async function GET(req: NextRequest) {
   if (error || !code || !state)
     return NextResponse.redirect(new URL(`/integrations?error=${error ?? "missing_params"}`, req.url));
 
-  const orgId = await kv.get<string>(`google:oauth:state:${state}`);
-  if (!orgId) return NextResponse.redirect(new URL("/integrations?error=invalid_state", req.url));
-  await kv.del(`google:oauth:state:${state}`);
+  const orgId = verifyOAuthState(state);
+  if (!orgId) {
+    console.warn("[google/callback] Invalid or expired CSRF state.");
+    return NextResponse.redirect(new URL("/integrations?error=invalid_state", req.url));
+  }
 
+  // Exchange code for tokens
   const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -30,7 +30,12 @@ export async function GET(req: NextRequest) {
       grant_type: "authorization_code",
     }),
   });
-  if (!tokenRes.ok) return NextResponse.redirect(new URL("/integrations?error=token_exchange_failed", req.url));
+
+  if (!tokenRes.ok) {
+    const body = await tokenRes.text();
+    console.error("[google/callback] Token exchange failed:", body);
+    return NextResponse.redirect(new URL("/integrations?error=token_exchange_failed", req.url));
+  }
 
   const tokenData = await tokenRes.json();
   const supabase = createServiceClient();
@@ -40,18 +45,21 @@ export async function GET(req: NextRequest) {
       client_id: orgId,
       platform: "google",
       access_token: tokenData.access_token,
-      refresh_token: tokenData.refresh_token,
-      expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString(),
+      refresh_token: tokenData.refresh_token ?? null,
+      expires_at: tokenData.expires_in
+        ? new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+        : null,
       active: true,
-      status: "active",
-      connected_at: new Date().toISOString(),
     },
     { onConflict: "client_id,platform" }
   );
 
   if (dbError) {
-    console.error("Google token save failed:", dbError);
-    return NextResponse.redirect(new URL("/integrations?error=save_failed", req.url));
+    console.error("[google/callback] DB upsert failed:", JSON.stringify(dbError));
+    return NextResponse.redirect(
+      new URL(`/integrations?error=save_failed&detail=${encodeURIComponent(dbError.message)}`, req.url)
+    );
   }
+
   return NextResponse.redirect(new URL("/integrations?success=google", req.url));
 }

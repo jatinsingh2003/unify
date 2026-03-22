@@ -1,9 +1,8 @@
 // app/(dashboard)/integrations/page.tsx
-// Reads last_synced_at from integrations table (your actual column name)
-
 import { auth } from "@clerk/nextjs/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { IntegrationCard } from "@/components/integrations/integration-card";
+import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
 
 const GoogleLogo = () => (
   <svg viewBox="0 0 24 24" className="w-6 h-6">
@@ -24,34 +23,91 @@ const ShopifyLogo = () => (
   </svg>
 );
 
-export default async function IntegrationsPage() {
+const SUCCESS_LABELS: Record<string, string> = {
+  google:  "Google Ads connected successfully!",
+  meta:    "Meta Ads connected successfully!",
+  shopify: "Shopify connected successfully!",
+};
+
+const ERROR_LABELS: Record<string, string> = {
+  missing_params:        "OAuth was cancelled or missing parameters.",
+  invalid_state:         "Session expired — please try connecting again. (Server may have restarted.)",
+  token_exchange_failed: "Google rejected the auth code. Check your GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET in .env.",
+  save_failed:           "Token was received but failed to save to database. Check Supabase logs.",
+};
+
+interface Props {
+  searchParams: { success?: string; error?: string; detail?: string };
+}
+
+export default async function IntegrationsPage({ searchParams }: Props) {
   const { orgId } = await auth();
   if (!orgId) return null;
 
   const supabase = createServiceClient();
-  const { data: integrations } = await supabase
+  const { data: integrations, error: dbError } = await supabase
     .from("integrations")
     .select("platform, active, last_synced_at")
     .eq("client_id", orgId);
 
   const get = (p: string) => integrations?.find(i => i.platform === p);
 
+  const successPlatform = searchParams.success;
+  const errorCode       = searchParams.error;
+  const errorDetail     = searchParams.detail;
   return (
-    <div className="p-6 max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Integrations</h1>
-        <p className="text-muted-foreground text-sm mt-1">Connect your ad platforms to start syncing data.</p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <IntegrationCard platform="google" name="Google Ads" description="Sync campaigns, spend, and conversion data."
-          connected={!!get("google")?.active} lastSyncedAt={get("google")?.last_synced_at}
-          connectHref="/api/integrations/google/connect" logo={<GoogleLogo />} />
-        <IntegrationCard platform="meta" name="Meta Ads" description="Sync Facebook & Instagram ad performance."
-          connected={!!get("meta")?.active} lastSyncedAt={get("meta")?.last_synced_at}
-          connectHref="/api/integrations/meta/connect" logo={<MetaLogo />} />
-        <IntegrationCard platform="shopify" name="Shopify" description="Pull order revenue to calculate true ROAS."
-          connected={!!get("shopify")?.active} lastSyncedAt={get("shopify")?.last_synced_at}
-          connectHref="#" logo={<ShopifyLogo />} />
+    <div className="min-h-screen bg-background container-padding">
+      <div className="max-w-7xl mx-auto section-spacing">
+        <div className="animate-in fade-in slide-in-from-top-4 duration-700">
+          <h1 className="text-heading-lg">Channels</h1>
+          <p className="text-body-sm mt-2 max-w-lg">
+            Connect your advertising and commerce platforms to unify your marketing performance data in one professional dashboard.
+          </p>
+        </div>
+
+      {/* Success banner */}
+      {successPlatform && (
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/10 bg-emerald-500/5 px-6 py-4 text-emerald-400 animate-in zoom-in-95 duration-500">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <p className="text-ui-label text-emerald-500">{SUCCESS_LABELS[successPlatform] ?? `${successPlatform} connected!`}</p>
+        </div>
+      )}
+
+      {/* Error banner */}
+      {errorCode && (
+        <div className="flex items-start gap-4 rounded-2xl border border-rose-500/10 bg-rose-500/5 px-6 py-5 text-rose-400 animate-in zoom-in-95 duration-500">
+          <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-ui-label text-rose-500">Sync Failure: {errorCode}</p>
+            <p className="text-body-sm text-rose-400/80">
+              {ERROR_LABELS[errorCode] ?? "An unexpected error occurred during the integration handshake."}
+            </p>
+            {errorDetail && (
+              <p className="mt-2 font-mono text-[10px] bg-black/20 p-2 rounded-lg border border-white/5 text-rose-500/70 max-w-fit">Detail: {errorDetail}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* DB error */}
+      {dbError && (
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-500/10 bg-amber-500/5 px-6 py-4 text-amber-400">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <p className="text-ui-label text-amber-500 underline decoration-amber-500/20">Database Error: {dbError.message}</p>
+        </div>
+      )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          <IntegrationCard platform="google" name="Google Ads" description="Sync search and display campaigns, spend, and conversion data."
+            connected={!!get("google")?.active} lastSyncedAt={get("google")?.last_synced_at}
+            connectHref="/api/integrations/google/connect" logo={<GoogleLogo />} />
+          <IntegrationCard platform="meta" name="Meta Ads" description="Sync Facebook & Instagram performance with deep attribution."
+            connected={!!get("meta")?.active} lastSyncedAt={get("meta")?.last_synced_at}
+            connectHref="/api/integrations/meta/connect" logo={<MetaLogo />} />
+          <IntegrationCard platform="shopify" name="Shopify" description="Pull order data to calculate true Net Sales and ROAS."
+            connected={!!get("shopify")?.active} lastSyncedAt={get("shopify")?.last_synced_at}
+            connectHref="#" logo={<ShopifyLogo />} />
+        </div>
       </div>
     </div>
   );

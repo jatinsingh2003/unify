@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import { KpiCard } from "./kpi-card";
 import { DollarSignIcon, TrendingUpIcon, MousePointerClickIcon, EyeIcon, ShoppingCartIcon, PercentIcon } from "lucide-react";
 
-interface Props { days?: number; platform?: string; }
+interface Props {
+  from: string;
+  to: string;
+  platform?: string;
+  compare?: boolean;
+}
 
 function fmt(v: number, type: "currency" | "number" | "percent" | "roas") {
   if (type === "currency") return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
@@ -12,24 +17,25 @@ function fmt(v: number, type: "currency" | "number" | "percent" | "roas") {
   return new Intl.NumberFormat("en-US", { notation: "compact" }).format(v);
 }
 
-export function KpiGrid({ days = 30, platform = "all" }: Props) {
+export function KpiGrid({ from, to, platform = "all", compare = false }: Props) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/metrics/overview?days=${days}&platform=${platform}`)
+    const params = new URLSearchParams({ from, to, platform });
+    fetch(`/api/metrics/overview?${params}`)
       .then(r => r.json()).then(json => { setData(json); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [days, platform]);
+  }, [from, to, platform]);
 
   const cards = [
-    { title: "Total Spend", value: data ? fmt(data.current.spend, "currency") : "$0", change: data?.changes.spend ?? null, icon: <DollarSignIcon className="w-4 h-4" /> },
-    { title: "Revenue", value: data ? fmt(data.current.revenue, "currency") : "$0", change: data?.changes.revenue ?? null, icon: <TrendingUpIcon className="w-4 h-4" /> },
-    { title: "ROAS", value: data ? fmt(data.current.roas, "roas") : "0x", change: data?.changes.roas ?? null, icon: <PercentIcon className="w-4 h-4" /> },
-    { title: "Impressions", value: data ? fmt(data.current.impressions, "number") : "0", change: data?.changes.impressions ?? null, icon: <EyeIcon className="w-4 h-4" /> },
-    { title: "Clicks", value: data ? fmt(data.current.clicks, "number") : "0", change: data?.changes.clicks ?? null, icon: <MousePointerClickIcon className="w-4 h-4" /> },
-    { title: "Conversions", value: data ? fmt(data.current.conversions, "number") : "0", change: data?.changes.conversions ?? null, icon: <ShoppingCartIcon className="w-4 h-4" /> },
+    { title: "Total Spend",  value: data ? fmt(data.current.spend, "currency") : "$0",   change: compare ? (data?.changes.spend ?? null) : null,        icon: <DollarSignIcon className="w-4 h-4" /> },
+    { title: "Revenue",      value: data ? fmt(data.current.revenue, "currency") : "$0",  change: compare ? (data?.changes.revenue ?? null) : null,      icon: <TrendingUpIcon className="w-4 h-4" /> },
+    { title: "ROAS",         value: data ? fmt(data.current.roas, "roas") : "0x",         change: compare ? (data?.changes.roas ?? null) : null,          icon: <PercentIcon className="w-4 h-4" /> },
+    { title: "Impressions",  value: data ? fmt(data.current.impressions, "number") : "0", change: compare ? (data?.changes.impressions ?? null) : null,   icon: <EyeIcon className="w-4 h-4" /> },
+    { title: "Clicks",       value: data ? fmt(data.current.clicks, "number") : "0",      change: compare ? (data?.changes.clicks ?? null) : null,        icon: <MousePointerClickIcon className="w-4 h-4" /> },
+    { title: "Conversions",  value: data ? fmt(data.current.conversions, "number") : "0", change: compare ? (data?.changes.conversions ?? null) : null,   icon: <ShoppingCartIcon className="w-4 h-4" /> },
   ];
 
   return (

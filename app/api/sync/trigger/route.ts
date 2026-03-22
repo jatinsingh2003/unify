@@ -17,8 +17,8 @@ export async function POST(req: NextRequest) {
   if (existing)
     return NextResponse.json({ error: "Sync already in progress. Wait 10 minutes." }, { status: 429 });
 
-  await kv.set(rateLimitKey, "1", { ex: 600 });
-  await inngest.send({ name: "sync/platform.requested", data: { clientId: orgId, platform, days: 30 } });
+  await kv.set(rateLimitKey, "1", 600);
+  await inngest.send({ name: "sync/platform.requested", data: { clientId: orgId, platform } });
 
   return NextResponse.json({ ok: true, message: `Sync started for ${platform}` });
 }

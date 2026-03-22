@@ -1,0 +1,40 @@
+UNIFY PROJECT SUMMARY - CURRENT STATUS & CAPABILITIES
+
+Overview:
+Unify is a Unified Marketing Analytics Dashboard designed for agencies to track performance across multiple platforms (Google Ads, Meta Ads, and Shopify) in a single, multi-tenant interface.
+
+1. CURRENT CAPABILITIES (Real-World Functionality)
+--------------------------------------------------
+* Multi-tenant Authentication: Secure login and organization management via Clerk. Data is strictly isolated between organizations using Supabase Row Level Security (RLS).
+* Platform Integration (Google & Meta): Full OAuth 2.0 flows are implemented. Users can connect their Google Ads and Meta Ads accounts, granting permissions for the app to read campaign and insight data.
+* Automated Data Sync: 
+    - Background jobs (via Inngest) automatically fetch fresh data every night.
+    - Manual "Sync Now" trigger available in the UI, with a 10-minute rate limit per platform.
+* Data Normalization: Automatically converts disparate metrics from different APIs (e.g., Google's micros, Meta's action arrays) into a unified schema for Spend, Revenue, Impressions, Clicks, etc.
+* Performance Dashboard: 
+    - KPI Cards: Real-time calculation of total Spend, Revenue, ROAS, and other metrics.
+    - Trend Analysis: Automatic comparison of current performance vs. the previous period (e.g., Last 30 days vs. Previous 30 days) with percentage change indicators.
+    - Visualization: Interactive Performance Chart (Recharts) showing Spend vs. Revenue trends over time.
+* Campaign Management: A unified table listing all campaigns from all connected platforms, sortable by performance metrics.
+
+2. WHAT IS CURRENTLY WORKING
+----------------------------
+* Authentication & Authorization: Clerk + Supabase integration is fully functional.
+* Database Schema: Schema for clients, integrations, campaigns, and daily_metrics is implemented and used.
+* Sync Engine: The Inngest pipeline for fetching, normalizing, and upserting data is robust and handles token refreshing.
+* Encryption: Secure AES-256-GCM encryption for storing sensitive OAuth tokens.
+* Analytics APIs: Optimized API routes for aggregating large volumes of daily metrics into dashboard views.
+* UI Foundation: A clean, professional dashboard sidebar, topbar, and layout system using shadcn/ui and Tailwind CSS.
+
+3. WHAT IS LEFT TO BE DONE / UPCOMING
+-------------------------------------
+* Shopify Integration (In Progress): The backend logic (normalizer and sync) exists, but the UI "Connect" button is currently a placeholder. The OAuth callback flow needs to be finalized in the browser.
+* Reports & Exports: The "Reports" tab is currently a stub. Functionality to export data as CSV or PDF is planned for later weeks.
+* Campaign Detail Pages: Deep-dive views for individual campaigns were part of the Week 6 roadmap.
+* UI Polish: Adding more granular alerts and improving the date range comparison tooltips.
+* Multi-currency Support: Currently, metrics are formatted in USD. Handling multiple currencies across platforms would be a future enhancement.
+
+Current Build Status (Roadmap):
+✅ Week 1-2: Schema, Auth, Google/Meta OAuth.
+[/] Week 3-4: Inngest Sync, Normalizer, Shopify (Work in progress).
+🔲 Week 5-6: UI Polish, Reports, Detail Views.

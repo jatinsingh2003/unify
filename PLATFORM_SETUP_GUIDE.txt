@@ -1,0 +1,211 @@
+==============================================================
+ UNIFY — PLATFORM INTEGRATION SETUP GUIDE
+ How to connect Google Ads, Meta Ads, and Shopify
+==============================================================
+
+Your .env already has:
+  APP_URL=http://localhost:3000
+  ENCRYPTION_KEY=(already set)
+  Supabase keys (already set)
+  Clerk keys (already set)
+
+You need to fill in the REPLACE_ME values for each platform.
+Each section below tells you exactly where to go and what to copy.
+
+--------------------------------------------------------------
+ 1. GOOGLE ADS
+--------------------------------------------------------------
+
+WHAT YOU GET: syncs Google Ads campaigns + daily spend/revenue/ROAS
+
+Step 1 — Create a Google Cloud project
+  1. Go to: https://console.cloud.google.com
+  2. Click the project dropdown (top left) → "New Project"
+  3. Name it anything (e.g. "Unify") → Create
+  4. Wait for it to create, then select it
+
+Step 2 — Enable the Google Ads API
+  1. In the left menu: APIs & Services → Library
+  2. Search "Google Ads API"
+  3. Click it → Enable
+
+Step 3 — Create OAuth 2.0 credentials
+  1. In the left menu: APIs & Services → Credentials
+  2. Click "+ Create Credentials" → OAuth client ID
+  3. If prompted to configure consent screen:
+       - User Type: External → Create
+       - App name: Unify
+       - User support email: your email
+       - Developer contact: your email
+       - Save and Continue → Save and Continue → Back to Dashboard
+  4. Back in Credentials → + Create Credentials → OAuth client ID
+       - Application type: Web application
+       - Name: Unify Local
+       - Authorized redirect URIs → + Add URI:
+           http://localhost:3000/api/integrations/google/callback
+       - Click Create
+
+Step 4 — Copy credentials
+  You will see a popup with:
+    Client ID:     something.apps.googleusercontent.com
+    Client Secret: GOCSPX-something
+
+  Paste these into your .env:
+    GOOGLE_CLIENT_ID=paste_client_id_here
+    GOOGLE_CLIENT_SECRET=paste_client_secret_here
+
+Step 5 — Get a Google Ads Developer Token
+  1. Go to: https://ads.google.com
+  2. Log in with a Google Ads account (even a test account works)
+  3. Top menu: Tools → API Center
+  4. You will see your Developer Token (or apply for one)
+  5. Copy it → paste into .env:
+    GOOGLE_DEVELOPER_TOKEN=paste_developer_token_here
+
+  NOTE: If you are just testing, a Test Account developer token is
+  enough. You do NOT need approval to test with your own account.
+
+.env section when done:
+  GOOGLE_CLIENT_ID=123456789-abc.apps.googleusercontent.com
+  GOOGLE_CLIENT_SECRET=GOCSPX-abcdefg123456
+  GOOGLE_DEVELOPER_TOKEN=AbCdEfGhIjKlMnOpQr
+
+--------------------------------------------------------------
+ 2. META ADS (Facebook + Instagram)
+--------------------------------------------------------------
+
+WHAT YOU GET: syncs Facebook + Instagram ad campaigns, spend, and ROAS
+
+Step 1 — Create a Meta Developer App
+  1. Go to: https://developers.facebook.com
+  2. Log in with your Facebook account
+  3. Top right: My Apps → Create App
+  4. Use case: "Other" → Next
+  5. App type: Business → Next
+  6. App name: Unify → Create App
+     (You may need to confirm your password)
+
+Step 2 — Add the Marketing API product
+  1. In the left sidebar: Add Products (the + icon)
+  2. Find "Marketing API" → Set Up
+
+Step 3 — Copy your App ID and App Secret
+  1. Left sidebar: Settings → Basic
+  2. You will see:
+       App ID:     a big number like 1234567890123456
+       App Secret: click "Show" → copy the secret
+
+  Paste into .env:
+    META_APP_ID=paste_app_id_here
+    META_APP_SECRET=paste_app_secret_here
+
+Step 4 — Add the OAuth redirect URI
+  1. Left sidebar: Facebook Login → Settings
+     (If not visible: Add Products → Facebook Login → Set Up → Web)
+  2. Under "Valid OAuth Redirect URIs" → add:
+       http://localhost:3000/api/integrations/meta/callback
+  3. Save Changes
+
+Step 5 — Request permissions (for production only)
+  For local testing with your own ad account, no approval needed.
+  For production (other users' accounts), you need to request:
+    ads_read, ads_management, business_management, read_insights
+
+.env section when done:
+  META_APP_ID=1234567890123456
+  META_APP_SECRET=abcdef1234567890abcdef1234567890
+
+--------------------------------------------------------------
+ 3. SHOPIFY
+--------------------------------------------------------------
+
+WHAT YOU GET: pulls Shopify order revenue to calculate true ROAS
+
+Step 1 — Create a Shopify Partner account (if you don't have one)
+  1. Go to: https://partners.shopify.com
+  2. Sign up for free
+  3. You get access to create apps and test stores
+
+Step 2 — Create a new Shopify App
+  1. In the Partner Dashboard: Apps → Create App
+  2. Name: Unify
+  3. App URL: http://localhost:3000
+  4. Allowed redirection URL(s):
+       http://localhost:3000/api/integrations/shopify/callback
+  5. Click Create App
+
+Step 3 — Copy your API credentials
+  1. In your new app: Overview (or API Credentials tab)
+  2. You will see:
+       Client ID (API key):  abc123def456...
+       Client Secret:        xyz789...
+
+  Paste into .env:
+    SHOPIFY_CLIENT_ID=paste_client_id_here
+    SHOPIFY_CLIENT_SECRET=paste_client_secret_here
+
+Step 4 — Get a test store (optional but recommended)
+  1. In Partner Dashboard: Stores → Create Store → Development store
+  2. Add some fake products and orders
+  3. When connecting in Unify, enter: yourstore.myshopify.com
+
+.env section when done:
+  SHOPIFY_CLIENT_ID=abc123def456abc123def456
+  SHOPIFY_CLIENT_SECRET=shpss_xyz789abc123xyz789
+
+--------------------------------------------------------------
+ 4. FINAL .env (all platform sections together)
+--------------------------------------------------------------
+
+Replace the REPLACE_ME values in your .env with the real values:
+
+  # Google Ads
+  GOOGLE_CLIENT_ID=YOUR_CLIENT_ID.apps.googleusercontent.com
+  GOOGLE_CLIENT_SECRET=GOCSPX-YOUR_SECRET
+  GOOGLE_DEVELOPER_TOKEN=YOUR_DEVELOPER_TOKEN
+
+  # Meta Ads
+  META_APP_ID=YOUR_APP_ID
+  META_APP_SECRET=YOUR_APP_SECRET
+
+  # Shopify
+  SHOPIFY_CLIENT_ID=YOUR_SHOPIFY_CLIENT_ID
+  SHOPIFY_CLIENT_SECRET=YOUR_SHOPIFY_CLIENT_SECRET
+
+  # App URL (already correct for local dev)
+  APP_URL=http://localhost:3000
+
+--------------------------------------------------------------
+ 5. AFTER FILLING IN .env
+--------------------------------------------------------------
+
+1. Stop the dev server (Ctrl+C)
+2. Restart:  npm run dev
+3. Go to:    http://localhost:3000/integrations
+4. Click:    Connect → for each platform
+5. You will be redirected to Google/Meta/Shopify to authorize
+6. After authorizing you come back to /integrations with the
+   platform shown as "Connected"
+7. Click "Sync Now" to pull your first batch of data
+8. Go to Overview to see your KPI cards and charts populate
+
+--------------------------------------------------------------
+ 6. NOTES
+--------------------------------------------------------------
+
+- Shopify connect requires the user to provide their shop domain
+  (e.g. mystore.myshopify.com) in the connect URL:
+  http://localhost:3000/api/integrations/shopify/connect?shop=mystore.myshopify.com
+
+- The Integrations page Shopify "Connect" button currently links to
+  "#" as a placeholder — you can manually visit the URL above or
+  update the href in: app/(dashboard)/integrations/page.tsx
+
+- Google OAuth requires the Google account to have access to at
+  least one Google Ads customer account. If you get "Access denied"
+  try adding yourself as a user in Google Ads first.
+
+- Meta: if you get "Invalid Scopes" on the OAuth screen, make sure
+  your app has the Marketing API product added (Step 2 above).
+
+==============================================================
