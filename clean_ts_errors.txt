@@ -1,0 +1,9 @@
+﻿components/dashboard/channel-breakdown.tsx(8,11): error TS2339: Property 'orgId' does not exist on type 'Promise<SessionAuthWithRedirect>'.
+lib/supabase/server.ts(27,16): error TS7006: Parameter 'cookiesToSet' implicitly has an 'any' type.
+lib/supabase/server.ts(29,37): error TS7031: Binding element 'name' implicitly has an 'any' type.
+lib/supabase/server.ts(29,43): error TS7031: Binding element 'value' implicitly has an 'any' type.
+lib/supabase/server.ts(29,50): error TS7031: Binding element 'options' implicitly has an 'any' type.
+  Property 'days' does not exist on type 'IntrinsicAttributes & Props'.
+  Property 'days' does not exist on type 'IntrinsicAttributes & Props'.
+  Property 'days' does not exist on type 'IntrinsicAttributes & Props'.
+  Property 'days' does not exist on type 'IntrinsicAttributes & Props'.

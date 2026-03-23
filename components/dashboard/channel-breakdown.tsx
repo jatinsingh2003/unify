@@ -2,10 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { auth } from "@clerk/nextjs/server";
 import { ChannelBreakdownClient } from "./channel-breakdown-client";
 
-interface Props { from: string; to: string }
+interface Props { from: string; to: string; days?: number }
 
 export async function ChannelBreakdown({ from, to }: Props) {
-  const { orgId } = auth();
+  const { orgId } = await auth();
   if (!orgId) return null;
 
   const supabase = await createClient();
