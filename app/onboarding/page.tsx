@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/no-require-imports */
 "use client";
+export const dynamic = "force-dynamic";
 
 import { CreateOrganization } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
