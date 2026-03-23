@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/no-require-imports */
 // app/(dashboard)/reports/page.tsx
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";

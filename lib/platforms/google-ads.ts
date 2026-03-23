@@ -71,6 +71,7 @@ export async function getGoogleCustomerIds(accessToken: string): Promise<string[
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function fetchGoogleCampaigns(accessToken: string, customerId: string): Promise<any[]> {
   const query = "SELECT campaign.id, campaign.name, campaign.status, campaign.advertising_channel_type FROM campaign WHERE campaign.status != 'REMOVED'";
   const url = `${GOOGLE_ADS_BASE}/customers/${customerId}/googleAds:search`;
@@ -107,6 +108,7 @@ export async function fetchGoogleDailyMetrics(
   accessToken: string,
   customerId: string,
   dateRange: { start: string; end: string }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any[]> {
   const query = `SELECT campaign.id, segments.date, metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.conversions, metrics.conversions_value FROM campaign WHERE segments.date BETWEEN '${dateRange.start}' AND '${dateRange.end}' AND campaign.status != 'REMOVED'`;
   const url = `${GOOGLE_ADS_BASE}/customers/${customerId}/googleAds:search`;

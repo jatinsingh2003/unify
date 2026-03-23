@@ -1,0 +1,79 @@
+UNIFY DASHBOARD - VERCEL DEPLOYMENT GUIDE (END-TO-END)
+======================================================
+
+1. VERCEL PROJECT SETUP
+-----------------------
+- Connect your GitHub repository to Vercel (https://vercel.com/new).
+- Framework Preset: Next.js.
+- Root Directory: ./unify (or your project root).
+- Build Command: `next build` (default).
+- Output Directory: `.next` (default).
+
+2. ENVIRONMENT VARIABLES (CRITICAL)
+-----------------------------------
+Add the following variables in the Vercel Project Settings > Environment Variables:
+
+# APP URL (Mandatory for OAuth redirects)
+APP_URL=https://your-app-name.vercel.app
+
+# NEXTAUTH / MISC
+NEXT_PUBLIC_APP_URL=https://your-app-name.vercel.app
+
+# SUPABASE (Database)
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# CLERK (Authentication)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+
+# INNGEST (Sync Engine)
+INNGEST_SIGNING_KEY=your-signing-key
+INNGEST_EVENT_KEY=your-event-key
+
+# SHOPIFY (Integrations)
+SHOPIFY_CLIENT_ID=your-shopify-app-id
+SHOPIFY_CLIENT_SECRET=your-shopify-app-secret
+
+# META ADS (Integrations)
+META_APP_ID=your-meta-app-id
+META_APP_SECRET=your-meta-app-secret
+
+# GOOGLE ADS (Integrations)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_DEVELOPER_TOKEN=your-approved-token
+
+3. SUPABASE DATABASE SETUP
+--------------------------
+Ensure you have run the provided migration scripts in the Supabase SQL Editor:
+- docs/phase-1-schema.sql (Initial setup)
+- docs/phase-4-migration.sql (Latest updates for Insights/Notifications)
+
+4. CLERK REDIRECTS
+------------------
+In the Clerk Dashboard (https://dashboard.clerk.com):
+- Add `https://your-app-name.vercel.app` to your allowed Origin/Redirect URLs.
+
+5. PLATFORM CALLBACKS (OAUTH)
+-----------------------------
+You MUST update your callback URLs in the developer consoles for each platform to point to your Vercel URL:
+
+- Shopify: https://your-app-name.vercel.app/api/integrations/shopify/callback
+- Meta:    https://your-app-name.vercel.app/api/integrations/meta/callback
+- Google:  https://your-app-name.vercel.app/api/integrations/google/callback
+
+6. DEPLOY & SYNC
+----------------
+- Push your changes to `main`.
+- Vercel will auto-deploy.
+- Once deployed, navigate to `/integrations` and connect your first channel!
+
+7. TROUBLESHOOTING
+------------------
+- Check Vercel Logs: If sync fails, check the "Runtime Logs" in Vercel.
+- Inngest Dashboard: Go to https://app.inngest.com to monitor background jobs.
+- OAuth "State" Error: Ensure the `APP_URL` env var DOES NOT have a trailing slash.

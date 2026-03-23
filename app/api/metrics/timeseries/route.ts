@@ -38,6 +38,7 @@ export async function GET(req: NextRequest) {
   const { data, error } = await q;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const byDate: Record<string, any> = {};
   for (const row of data ?? []) {
     if (!byDate[row.date]) byDate[row.date] = { date: row.date, spend: 0, revenue: 0, impressions: 0, clicks: 0, conversions: 0 };

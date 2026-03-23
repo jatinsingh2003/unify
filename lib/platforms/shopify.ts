@@ -2,7 +2,7 @@
 // Shopify uses tokens_encrypted column (added by migration)
 // because Shopify tokens don't expire and have no refresh_token
 
-import { decrypt, encrypt } from "@/lib/encryption";
+import { decrypt } from "@/lib/encryption";
 import { createServiceClient } from "@/lib/supabase/server";
 
 export interface ShopifyTokens {

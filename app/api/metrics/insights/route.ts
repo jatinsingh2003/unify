@@ -35,6 +35,7 @@ export async function GET(req: NextRequest) {
     if (error) throw new Error(error.message);
     
     return (data ?? []).reduce(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (acc: any, row) => {
         acc.total.spend += row.spend ?? 0;
         acc.total.revenue += row.revenue ?? 0;
@@ -83,6 +84,7 @@ export async function GET(req: NextRequest) {
   }
 
   // 3. Platform Winner
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const platforms = Object.entries(current.platforms as Record<string, any>);
   if (platforms.length > 0) {
     const winner = platforms.reduce((prev, curr) => {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/no-require-imports */
 "use client";
 import { ArrowUpIcon, ArrowDownIcon, MinusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";

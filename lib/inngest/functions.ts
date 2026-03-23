@@ -146,6 +146,7 @@ export const syncPlatform = inngest.createFunction(
         if (!uuid) throw new Error("Failed to get Shopify campaign UUID");
 
         // 1. Process Attribution
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const attributionRows = (orders as any[]).map(o => extractOrderAttribution(o, clientId));
         const supabase = createServiceClient();
         if (attributionRows.length > 0) {

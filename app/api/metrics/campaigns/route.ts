@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
   if (mErr) return NextResponse.json({ error: mErr.message }, { status: 500 });
 
   // Aggregate by campaign UUID
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mMap: Record<string, any> = {};
   for (const row of metrics ?? []) {
     if (!mMap[row.campaign_id])

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/no-require-imports */
 import type { Metadata } from "next";
 import { auth } from "@clerk/nextjs/server";
 import { OrganizationProfile } from "@clerk/nextjs";

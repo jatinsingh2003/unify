@@ -76,6 +76,7 @@ export default async function CampaignDetailPage({ params, searchParams }: Props
   const currentRows = rows.filter(r => r.date >= fromStr && r.date <= toStr);
   const prevRows    = rows.filter(r => r.date >= prevFromStr && r.date <= prevToStr);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const calcTotals = (items: any[]) => items.reduce(
     (acc, r) => ({
       spend:       acc.spend       + (r.spend ?? 0),

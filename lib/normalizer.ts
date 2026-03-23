@@ -34,6 +34,7 @@ export interface NormalizedDailyMetric {
   raw_data: Record<string, unknown>;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizeGoogleCampaign(raw: any, clientId: string): NormalizedCampaign {
   const statusMap: Record<string, NormalizedCampaign["status"]> = {
     ENABLED: "active", PAUSED: "paused", REMOVED: "archived",
@@ -49,6 +50,7 @@ export function normalizeGoogleCampaign(raw: any, clientId: string): NormalizedC
 }
 
 export function normalizeGoogleMetrics(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: any, clientId: string, campaignUuid: string, date: string
 ): NormalizedDailyMetric {
   const spend = (raw.metrics.costMicros ?? 0) / 1_000_000;
@@ -69,6 +71,7 @@ export function normalizeGoogleMetrics(
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizeMetaCampaign(raw: any, clientId: string): NormalizedCampaign {
   const statusMap: Record<string, NormalizedCampaign["status"]> = {
     ACTIVE: "active", PAUSED: "paused", DELETED: "archived", ARCHIVED: "archived",
@@ -82,11 +85,12 @@ export function normalizeMetaCampaign(raw: any, clientId: string): NormalizedCam
 }
 
 export function normalizeMetaMetrics(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: any, clientId: string, campaignUuid: string
 ): NormalizedDailyMetric {
   const spend = parseFloat(raw.spend ?? "0");
-  const revenue = parseFloat(raw.action_values?.find((a: any) => a.action_type === "purchase")?.value ?? "0");
-  const conversions = parseFloat(raw.actions?.find((a: any) => a.action_type === "purchase")?.value ?? "0");
+  const revenue = parseFloat(raw.action_values?.find((a: { action_type: string; value: string }) => a.action_type === "purchase")?.value ?? "0");
+  const conversions = parseFloat(raw.actions?.find((a: { action_type: string; value: string }) => a.action_type === "purchase")?.value ?? "0");
   const clicks = parseInt(raw.clicks ?? "0", 10);
   const impressions = parseInt(raw.impressions ?? "0", 10);
   return {
@@ -115,6 +119,7 @@ export interface NormalizedOrderAttribution {
   created_at: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function extractOrderAttribution(order: any, clientId: string): NormalizedOrderAttribution {
   const landingSite = order.landing_site || "";
   const params = new URLSearchParams(landingSite.includes("?") ? landingSite.split("?")[1] : "");
@@ -137,8 +142,8 @@ export function normalizeShopifyOrders(
   orders: unknown[], clientId: string, campaignUuid: string, date: string
 ): NormalizedDailyMetric {
   // Net Sales = Subtotal - Discounts
-  const subtotal = (orders as any[]).reduce((sum, o) => sum + parseFloat(o.subtotal_price ?? "0"), 0);
-  const discounts = (orders as any[]).reduce((sum, o) => sum + parseFloat(o.total_discounts ?? "0"), 0);
+  const subtotal = (orders as { subtotal_price?: string }[]).reduce((sum, o) => sum + parseFloat(o.subtotal_price ?? "0"), 0);
+  const discounts = (orders as { total_discounts?: string }[]).reduce((sum, o) => sum + parseFloat(o.total_discounts ?? "0"), 0);
   const revenue = subtotal - discounts;
   
   const cnt = orders.length;

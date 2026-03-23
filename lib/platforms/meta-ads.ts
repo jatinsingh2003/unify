@@ -47,7 +47,7 @@ export async function getMetaAdAccounts(accessToken: string): Promise<string[]> 
 
   try {
     const data = JSON.parse(rawBody);
-    return (data.data ?? []).map((a: any) => a.id as string);
+    return (data.data ?? []).map((a: { id: string }) => a.id);
   } catch (err) {
     console.error("[meta-ads] Failed to parse account JSON:", err);
     console.error("[meta-ads] Raw Response:", rawBody);
@@ -55,6 +55,7 @@ export async function getMetaAdAccounts(accessToken: string): Promise<string[]> 
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function fetchMetaCampaigns(accessToken: string, adAccountId: string): Promise<any[]> {
   const res = await fetch(`${META_GRAPH}/${adAccountId}/campaigns?fields=id,name,status,objective&access_token=${accessToken}`);
   const rawBody = await res.text();
@@ -77,6 +78,7 @@ export async function fetchMetaCampaigns(accessToken: string, adAccountId: strin
 
 export async function fetchMetaDailyInsights(
   accessToken: string, adAccountId: string, dateRange: { start: string; end: string }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any[]> {
   const res = await fetch(
     `${META_GRAPH}/${adAccountId}/insights?fields=campaign_id,date_start,spend,impressions,clicks,actions,action_values` +
