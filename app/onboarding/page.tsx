@@ -1,13 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @typescript-eslint/no-require-imports */
 "use client";
 export const dynamic = "force-dynamic";
 
 import { CreateOrganization } from "@clerk/nextjs";
-// import { useRouter } from "next/navigation";
 
 export default function OnboardingPage() {
-  // const router = useRouter();
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
       <div
@@ -37,8 +33,23 @@ export default function OnboardingPage() {
           skipInvitationScreen
           appearance={{
             elements: {
-              rootBox: "w-full",
-              card: "shadow-md border border-border rounded-xl",
+              rootBox: {
+                width: "100%",
+              },
+              card: {
+                width: "100%",
+                minHeight: "400px",
+                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.3)",
+                border: "1px solid rgb(51 65 85)",
+                borderRadius: "0.75rem",
+                backgroundColor: "#1e293b",
+              },
+              cardBox: {
+                width: "100%",
+              },
+              form: {
+                width: "100%",
+              },
             },
           }}
         />

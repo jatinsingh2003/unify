@@ -13,9 +13,10 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com",
               "font-src 'self' https://fonts.gstatic.com https://api.fontshare.com https://cdn.fontshare.com",
               "img-src 'self' data: https://img.clerk.com https://*.clerk.com",
-              "connect-src 'self' https://*.supabase.co https://clerk.com https://*.clerk.accounts.dev https://clerk.spritzstudio.in https://api.inngest.com",
+              "connect-src 'self' https://*.supabase.co https://clerk.com https://*.clerk.accounts.dev https://clerk.spritzstudio.in https://api.inngest.com wss://*.clerk.accounts.dev wss://clerk.spritzstudio.in",
               "worker-src blob:",
-              "frame-src https://challenges.cloudflare.com",
+              // ↓ THIS was the problem — Clerk renders CreateOrganization in an iframe
+              "frame-src https://challenges.cloudflare.com https://clerk.spritzstudio.in https://*.clerk.accounts.dev",
             ].join("; "),
           },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
